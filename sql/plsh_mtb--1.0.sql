@@ -23,8 +23,6 @@ LANGUAGE plsh
 AS $$
 #!/bin/sh
 
-config_prefix=plsh_mtb
-real_script=$(psql -At -c "SHOW $config_prefix.script")
-
-exec "$real_script" "$cmd"
+PGBINDIR=$(pg_config --bindir)
+exec "$PGBINDIR/plsh_mtb" "$cmd"
 $$;

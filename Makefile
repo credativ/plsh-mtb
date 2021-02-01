@@ -1,18 +1,7 @@
-PGVERSION ?= 13
-
 EXTENSION = plsh_mtb
-PREFIX ?= /usr
-EXTDIR ?= ${PREFIX}/share/postgresql/${PGVERSION}/extension
-BINDIR ?= ${PREFIX}/bin
+DATA = sql/plsh_mtb--1.0.sql
+SCRIPTS = src/plsh_mtb
 
-install:
-	/bin/install -D -m 0644 ${EXTENSION}.control "${EXTDIR}"/${EXTENSION}.control
-	/bin/install -D -m 0644 sql/${EXTENSION}--1.0.sql "${EXTDIR}"/${EXTENSION}--1.0.sql
-	/bin/install -D -m 0755 src/${EXTENSION}.sh "${BINDIR}"/${EXTENSION}
-
-uninstall:
-	rm "${BINDIR}"/${EXTENSION}
-	rm "${EXTDIR}"/${EXTENSION}--1.0.sql
-	rm "${EXTDIR}"/${EXTENSION}.control
-
-.PHONY: install uninstall
+PG_CONFIG = pg_config
+PGXS := $(shell $(PG_CONFIG) --pgxs)
+include $(PGXS)
