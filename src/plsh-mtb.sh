@@ -20,6 +20,32 @@
 # ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATIONS TO
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
+config_prefix=plsh_mtb
+
+bailout() {
+    print -ru2 "$*"
+    exit 1
+}
+
+is_valid_name() {
+    # Vreify that argument is a valid name and safe for inserting into psql
+
+    name=$1
+    if [[ "$name" = +([A-Za-z0-9_]) ]]; then
+	return 0
+    else
+	bailout "$name is not a valid name"
+    fi
+}
+
+get_config() {
+    # Get a system setting from the plsh_mtb prefix
+
+    param=$1; is_valid_name "$param"
+
+    output=$(psql --csv -c "SHOW $config_prefix.$param;" 2>&1) || bailout "$output"
+    echo "${output#*$'\n'}"
+}
 
 # Start Backup
 backup_start() {
