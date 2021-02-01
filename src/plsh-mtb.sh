@@ -19,3 +19,35 @@
 # AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
 # ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATIONS TO
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+
+
+# Start Backup
+backup_start() {
+
+}
+
+# Stop Backup
+backup_stop() {
+
+}
+
+# Remove Backup
+backup_rm() {
+
+}
+
+# Restore Backup
+backup_restore() {
+
+}
+
+# Lists Backups and Stats
+backup_infos() {
+
+}
+
+# Lists Stats of Current Backup
+backup_info() {
+
+}
+
