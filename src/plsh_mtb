@@ -47,7 +47,7 @@ run_sql() {
     print -r -- "${output}"
 }
 
-get_config() {
+get_setting() {
     # Get a system setting from the plsh_mtb prefix
 
     run_sql "SHOW $config_prefix.$param"
