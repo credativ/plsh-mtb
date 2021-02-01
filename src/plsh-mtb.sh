@@ -43,8 +43,8 @@ get_config() {
 
     param=$1; is_valid_name "$param"
 
-    output=$(psql --csv -c "SHOW $config_prefix.$param;" 2>&1) || bailout "$output"
-    echo "${output#*$'\n'}"
+    output=$(psql -At -c "SHOW $config_prefix.$param" 2>&1) || bailout "$output"
+    echo "${output}"
 }
 
 # Start Backup
