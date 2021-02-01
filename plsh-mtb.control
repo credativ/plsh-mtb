@@ -1,0 +1,4 @@
+comment = 'multi-tenant backup based on PL/SH and Korn Shell'
+default_version = '1.0'
+encoding = 'utf-8'
+requires = 'plsh'
