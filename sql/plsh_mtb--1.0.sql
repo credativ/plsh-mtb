@@ -17,3 +17,14 @@
 -- AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER IS
 -- ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATIONS TO
 -- PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
+
+CREATE FUNCTION customer_backup(cmd text) RETURNS text
+LANGUAGE plsh
+AS $$
+#!/bin/sh
+
+config_prefix=plsh_mtb
+real_script=$(psql -At -c "SHOW $config_prefix.script")
+
+exec "$real_script" "$cmd"
+$$;
