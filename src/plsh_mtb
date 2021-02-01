@@ -43,7 +43,7 @@ get_config() {
 
     param=$1; is_valid_name "$param"
 
-    output=$(psql -At -c "SHOW $config_prefix.$param" 2>&1) || bailout "$output"
+    output=$(psql -AtX -c "SHOW $config_prefix.$param" 2>&1) || bailout "$output"
     echo "${output}"
 }
 
@@ -76,4 +76,3 @@ backup_infos() {
 backup_info() {
 
 }
-
