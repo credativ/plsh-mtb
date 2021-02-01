@@ -38,13 +38,19 @@ is_valid_name() {
     fi
 }
 
+run_sql() {
+    # Pass SQL statement to psql and return result
+
+    sql="$*"
+
+    output=$(psql -AtX -c "$sql" 2>&1) || bailout "$output"
+    print -r -- "${output}"
+}
+
 get_config() {
     # Get a system setting from the plsh_mtb prefix
 
-    param=$1; is_valid_name "$param"
-
-    output=$(psql -AtX -c "SHOW $config_prefix.$param" 2>&1) || bailout "$output"
-    echo "${output}"
+    run_sql "SHOW $config_prefix.$param"
 }
 
 # Start Backup
