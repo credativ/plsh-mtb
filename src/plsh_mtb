@@ -53,6 +53,12 @@ get_setting() {
     run_sql "SHOW $config_prefix.$param"
 }
 
+get_original_user() {
+    # Determine the original user in parent PostgreSQL session
+
+    run_sql "SELECT usename FROM pg_stat_activity WHERE pid=$PPID"
+}
+
 # Start Backup
 backup_start() {
 
@@ -82,3 +88,5 @@ backup_infos() {
 backup_info() {
 
 }
+
+PG_ORIGINAL_USER=$(get_original_user)
