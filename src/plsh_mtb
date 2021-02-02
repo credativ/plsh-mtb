@@ -61,6 +61,13 @@ get_original_user() {
 }
 
 is_backup_running() {
+    run_sql "SELECT count(*) FROM plsh_mbt_backups WHERE state='running';" || \
+        bailout "Could not mark backup running"
+    
+    if [[ $1 = '0' ]]; then
+        return 0
+    fi
+    return 1
 }
 
 mark_backup_running() {
