@@ -93,7 +93,7 @@ backup_start() {
     
     # Run backup
     output = $(pg_dump \
-        -Z ${COMPRESSION_LEVEL}
+        -Z ${COMPRESSION_LEVEL} \
         ${DBNAME} \
         > ${BACKUP_DIR}/${BACKUP_FILE}${BACKUP_FILE_SUFFIX}
 
