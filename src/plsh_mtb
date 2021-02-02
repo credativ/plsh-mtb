@@ -65,7 +65,7 @@ backup_start() {
     BACKUP_DIR="$(get_setting(dir))/${DBNAME}"
     BACKUP_FILE="$(date --date=now +%Y%m%d%H%M%S))"
     BACKUP_FILE_SUFFIX=".sql"
-    LOCK_FILE="${BACKUP_DIR}/plsh_mtb.lock"
+    LOCK_FILE="plsh_mtb.lock"
 
     # If compression level is set in the range of 1-9 append gz suffix
     if [[ $COMPRESSION_LEVEL = +([1-9]) ]]; then
