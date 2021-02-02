@@ -21,6 +21,7 @@
 # PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 config_prefix=plsh_mtb
+table_prefix=plsh_mtb
 
 bailout() {
     print -ru2 "$*"
@@ -59,57 +60,68 @@ get_original_user() {
     run_sql "SELECT usename FROM pg_stat_activity WHERE pid=$PPID"
 }
 
+is_backup_running() {
+}
+
+mark_backup_running() {
+    started=$1; shift
+    filename=$1; shift
+
+    run_sql "INSERT INTO ${table_prefix}_backups (filename, started, state, pid)\
+               VALUES('$filename', TO_TIMESTAMP('$started', 'YYYYMMDDHHMISS'), 'running', $$)" || \
+        bailout "Could not mark backup running"
+}
+
+mark_backup_done() {
+    ended=$(date --date=now +%Y%m%d%H%M%S)
+
+    run_sql "UPDATE ${table_prefix}_backups SET \
+               ended=TO_TIMESTAMP('$ended', 'YYYYMMDDHHMISS'), \
+               state='done', \
+               pid=NULL \
+             WHERE filename = '${BACKUP_FILE}'" || \
+        bailout "Could not mark backup done"
+}
+
+mark_backup_failed() {
+    ended=$(date --date=now +%Y%m%d%H%M%S)
+
+    run_sql "UPDATE ${table_prefix}_backups SET \
+               ended=TO_TIMESTAMP('$ended', 'YYYYMMDDHHMISS'), \
+               state='failed', \
+               pid=NULL \
+             WHERE filename = '${BACKUP_FILE}'" || \
+        bailout "Could not mark backup failed"
+}
+
 # Start Backup
 backup_start() {
-    COMPRESSION_LEVEL=$(get_setting(compression_level))
-    BACKUP_DIR="$(get_setting(dir))/${DBNAME}"
-    BACKUP_FILE="$(date --date=now +%Y%m%d%H%M%S))"
-    BACKUP_FILE_SUFFIX=".sql"
-    LOCK_FILE="plsh_mtb.lock"
+    is_backup_running && bailout "Backup already running"
+
+    BACKUP_DB_DIR=${BACKUP_DIR}/${PGDATABASE}
+    STARTED=$(date --date=now +%Y%m%d%H%M%S)
+    BACKUP_FILE=${STARTED}.sql
 
     # If compression level is set in the range of 1-9 append gz suffix
-    if [[ $COMPRESSION_LEVEL = +([1-9]) ]]; then
-        $BACKUP_FILE_SUFFIX="${BACKUP_FILE_SUFFIX}.gz"
+    if [[ $COMPRESSION_LEVEL = [1-9] ]]; then
+        BACKUP_FILE=${BACKUP_FILE}.gz
     fi
 
-    if [[ ! -d ${BACKUP_DIR} ]]; then
-        bailout "Backup directory is not initialized."
-    fi
+    mkdir -p "${BACKUP_DB_DIR}" || bailout "Could not create backup directory"
 
-    # If lockfile is 
-    if [[ -f ${BACKUP_DIR}/${LOCK_FILE} ]]; then
-        bailout "Backup already running on given Database."
-    fi
-    touch ${BACKUP_DIR}/${LOCK_FILE}
-    
     # Insert database entry for running backup
-    run_sql( \
-        "INSERT INTO plsh_mtb_backups \
-        VALUES( \
-            ${BACKUP_FILE}, \
-            TO_TIMESTAMP('${BACKUP_FILE}', 'YYYYMMDDHHMISS'), \
-            TO_TIMESTAMP('${BACKUP_FILE}', 'YYYYMMDDHHMISS'), \
-            'running');")
+    mark_backup_running ${STARTED} "${BACKUP_FILE}"
     
     # Run backup
-    output = $(pg_dump \
-        -Z ${COMPRESSION_LEVEL} \
-        ${DBNAME} \
-        > ${BACKUP_DIR}/${BACKUP_FILE}${BACKUP_FILE_SUFFIX}
+    pg_dump -Z ${COMPRESSION_LEVEL} ${PGDATABASE} -f "${BACKUP_DB_DIR}/${BACKUP_FILE}"
 
     # Check for successful backup
-    
-    # Update database entry for successful backup
-    run_sql( \
-        "UPDATE plsh_mtb_backups \
-            SET ended=TO_TIMESTAMP('$(date --date=now +%Y%m%d%H%M%S)', 'YYYYMMDDHHMISS'), \
-            SET state='done' \
-        WHERE filename = ${BACKUP_FILE};)
-    
-    # Remove lock
-    rm ${LOCK_FILE}
-
-    print -r -- "${output}"
+    if [[ $? = 0 ]]; then
+	mark_backup_done "${BACKUP_FILE}"
+    else
+	mark_backup_failed "${BACKUP_FILE}"
+	bailout "Backup failed"
+    fi
 }
 
 # Stop Backup
@@ -139,3 +151,5 @@ backup_info() {
 }
 
 PG_ORIGINAL_USER=$(get_original_user)
+BACKUP_DIR=$(get_setting dir)
+COMPRESSION_LEVEL=$(get_setting compression_level)
