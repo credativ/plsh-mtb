@@ -29,7 +29,7 @@ $$;
 
 CREATE TYPE plsh_mtb_backup_state AS ENUM ('running', 'done', 'aborted', 'failed');
 
-CREATE TABLE IF NOT EXISTS plsh_mtb_backups (
+CREATE TABLE plsh_mtb_backups (
     filename bigint PRIMARY KEY,
     started timestamp NOT NULL,
     ended timestamp NOT NULL,
