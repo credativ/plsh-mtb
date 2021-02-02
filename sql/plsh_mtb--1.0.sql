@@ -27,7 +27,7 @@ PGBINDIR=$(pg_config --bindir)
 exec "$PGBINDIR/plsh_mtb" "$cmd"
 $$;
 
-CREATE TYPE plsh_mtb_backup_state AS ENUM ('running', 'done', 'aborted', 'failed');
+CREATE TYPE plsh_mtb_backup_state AS ENUM ('running', 'done', 'aborted', 'failed', 'stopped');
 
 CREATE TABLE plsh_mtb_backups (
     filename text PRIMARY KEY,
