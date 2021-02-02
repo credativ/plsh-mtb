@@ -99,6 +99,17 @@ mark_backup_failed() {
         bailout "Could not mark backup failed"
 }
 
+mark_backup_aborted() {
+    ended=$(date --date=now +%Y%m%d%H%M%S)
+
+    run_sql "UPDATE ${table_prefix}_backups SET \
+               ended=TO_TIMESTAMP('$ended', 'YYYYMMDDHHMISS'), \
+               state='aborted', \
+               pid=NULL \
+             WHERE filename = '${BACKUP_FILE}'" || \
+        bailout "Could not mark backup aborted"
+}
+
 # Start Backup
 backup_start() {
     is_backup_running && bailout "Backup already running"
