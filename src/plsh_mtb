@@ -61,7 +61,55 @@ get_original_user() {
 
 # Start Backup
 backup_start() {
+    COMPRESSION_LEVEL=$(get_setting(compression_level))
+    BACKUP_DIR="$(get_setting(dir))/${DBNAME}"
+    BACKUP_FILE="$(date --date=now +%Y%m%d%H%M%S))"
+    BACKUP_FILE_SUFFIX=".sql"
+    LOCK_FILE="${BACKUP_DIR}/plsh_mtb.lock"
 
+    # If compression level is set in the range of 1-9 append gz suffix
+    if [[ $COMPRESSION_LEVEL = +([1-9]) ]]; then
+        $BACKUP_FILE_SUFFIX="${BACKUP_FILE_SUFFIX}.gz"
+    fi
+
+    if [[ ! -d ${BACKUP_DIR} ]]; then
+        bailout "Backup directory is not initialized."
+    fi
+
+    # If lockfile is 
+    if [[ -f ${BACKUP_DIR}/${LOCK_FILE} ]]; then
+        bailout "Backup already running on given Database."
+    fi
+    touch ${BACKUP_DIR}/${LOCK_FILE}
+    
+    # Insert database entry for running backup
+    run_sql( \
+        "INSERT INTO plsh_mtb_backups \
+        VALUES( \
+            ${BACKUP_FILE}, \
+            TO_TIMESTAMP('${BACKUP_FILE}', 'YYYYMMDDHHMISS'), \
+            TO_TIMESTAMP('${BACKUP_FILE}', 'YYYYMMDDHHMISS'), \
+            'running');")
+    
+    # Run backup
+    output = $(pg_dump \
+        -Z ${COMPRESSION_LEVEL}
+        ${DBNAME} \
+        > ${BACKUP_DIR}/${BACKUP_FILE}${BACKUP_FILE_SUFFIX}
+
+    # Check for successful backup
+    
+    # Update database entry for successful backup
+    run_sql( \
+        "UPDATE plsh_mtb_backups \
+            SET ended=TO_TIMESTAMP('$(date --date=now +%Y%m%d%H%M%S)', 'YYYYMMDDHHMISS'), \
+            SET state='done' \
+        WHERE filename = ${BACKUP_FILE};)
+    
+    # Remove lock
+    rm ${LOCK_FILE}
+
+    print -r -- "${output}"
 }
 
 # Stop Backup
@@ -69,6 +117,7 @@ backup_stop() {
 
 }
 
+#
 # Remove Backup
 backup_rm() {
 
