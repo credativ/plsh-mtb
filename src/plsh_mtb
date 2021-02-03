@@ -40,6 +40,8 @@ run_sql() {
 get_setting() {
     # Get a system setting from the plsh_mtb prefix
 
+    param=$1
+
     run_sql "SHOW $config_prefix.$param"
 }
 
@@ -188,3 +190,5 @@ backup_continue() {
 
 BACKUP_DIR=$(get_setting dir)
 COMPRESSION_LEVEL=$(get_setting compression_level)
+DUMP_CMD=$(get_setting dump)
+LOGFILE=$(get_setting log)
