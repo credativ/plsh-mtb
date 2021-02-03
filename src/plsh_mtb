@@ -28,17 +28,6 @@ bailout() {
     exit 1
 }
 
-is_valid_name() {
-    # Vreify that argument is a valid name and safe for inserting into psql
-
-    name=$1
-    if [[ "$name" = +([A-Za-z0-9_]) ]]; then
-	return 0
-    else
-	bailout "$name is not a valid name"
-    fi
-}
-
 run_sql() {
     # Pass SQL statement to psql and return result
 
@@ -52,12 +41,6 @@ get_setting() {
     # Get a system setting from the plsh_mtb prefix
 
     run_sql "SHOW $config_prefix.$param"
-}
-
-get_original_user() {
-    # Determine the original user in parent PostgreSQL session
-
-    run_sql "SELECT usename FROM pg_stat_activity WHERE pid=$PPID"
 }
 
 get_running_pid() {
@@ -203,6 +186,5 @@ backup_continue() {
     backup_kill CONT running
 }
 
-PG_ORIGINAL_USER=$(get_original_user)
 BACKUP_DIR=$(get_setting dir)
 COMPRESSION_LEVEL=$(get_setting compression_level)
