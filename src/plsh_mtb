@@ -28,10 +28,6 @@ bailout() {
     exit 1
 }
 
-is_backup_running() {
-    [ kill -0 $1 ]
-}
-
 is_valid_name() {
     # Vreify that argument is a valid name and safe for inserting into psql
 
