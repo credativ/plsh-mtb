@@ -172,6 +172,20 @@ backup_stop() {
     mark_backup_stoped
 }
 
+# Continue Backup
+backup_continue() {
+    PID=run_sql "SELECT pid FROM plsh_mbt_backups WHERE state='stopped';" || \
+        bailout "Could not mark backup running"
+
+    [ ! is_backup_running $PID] || \
+        bailout "No Backup to continue"
+
+    kill -SIGCONT $PID
+    shift
+
+    mark_backup_running
+}
+
 # Remove Backup
 backup_rm() {
 
