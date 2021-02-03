@@ -61,10 +61,15 @@ get_original_user() {
 }
 
 get_running_pid() {
+    # Get the PID of the one currently running/stopped backup
+
     run_sql "SELECT pid FROM ${table_prefix}_backups WHERE state IN ('running', 'stopped')"
 }
 
 get_backup_file_by_pid() {
+    # Get the filename of a running/stopped backup by its PID
+    # FIXME Probably unnecessary as we can only have one running backup…
+
     pid=$1
 
     output=$(run_sql "SELECT filename FROM ${table_prefix}_backups WHERE pid=$pid")
@@ -74,6 +79,8 @@ get_backup_file_by_pid() {
 }
 
 is_pid_backup_process() {
+    # Check that a PID is a running backup process
+
     pid=$1
 
     if [[ ! -d /proc/$pid ]]; then
@@ -81,15 +88,17 @@ is_pid_backup_process() {
 	backup_file=$(get_backup_file_by_pid $pid)
 	mark_backup_ended failed "$backup_file"
 	return 1
-    elif .; then
-	# FIXME check cmdline, whatever
-        return 1
+#    elif .; then
+#        # FIXME check cmdline, whatever
+#        return 1
     fi
 
     return 0
 }
 
 is_backup_running() {
+    # Check whether a backup is running
+
     pid=$(get_running_pid)
     
     [[ -n $pid ]] && return 0
@@ -97,6 +106,8 @@ is_backup_running() {
 }
 
 mark_backup_running() {
+    # Register a new running backup
+
     started=$1; shift
     filename=$1; shift
 
@@ -107,6 +118,8 @@ mark_backup_running() {
 }
 
 mark_backup_ended() {
+    # Mark a backup with a state other than running
+
     state=$1
     backup_file=$2
     ended=$(date --date=now +%Y%m%d%H%M%S)
@@ -119,8 +132,9 @@ mark_backup_ended() {
         bailout "Could not mark backup $state"
 }
 
-# Start Backup
 backup_start() {
+    # Start a new backup
+
     is_backup_running && bailout "Backup already running"
 
     BACKUP_DB_DIR=${BACKUP_DIR}/${PGDATABASE}
@@ -138,6 +152,7 @@ backup_start() {
     mark_backup_running ${STARTED} "${BACKUP_FILE}"
     
     # Run backup
+    # FIXME Detach into background
     pg_dump -Z ${COMPRESSION_LEVEL} ${PGDATABASE} -f "${BACKUP_DB_DIR}/${BACKUP_FILE}"
 
     # Check for successful backup
@@ -150,6 +165,8 @@ backup_start() {
 }
 
 backup_kill() {
+    # Send a signal to a running backup process and mark backup accordingly
+
     signal=$1; shift
     state=$1; shift
 
@@ -168,18 +185,21 @@ backup_kill() {
     fi
 }
 
-# Abort Backup
 backup_abort() {
+    # Abort a running backup
+
     backup_kill TERM aborted
 }
 
-# Stop Backup
 backup_stop() {
+    # Preempt a running backup
+
     backup_kill STOP stopped
 }
 
-# Continue Backup
 backup_continue() {
+    # Continue a prveiously preempted backup
+
     backup_kill CONT running
 }
 
