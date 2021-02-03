@@ -183,26 +183,6 @@ backup_continue() {
     backup_kill CONT running
 }
 
-# Remove Backup
-backup_rm() {
-
-}
-
-# Restore Backup
-backup_restore() {
-
-}
-
-# Lists Backups and Stats
-backup_infos() {
-
-}
-
-# Lists Stats of Current Backup
-backup_info() {
-
-}
-
 PG_ORIGINAL_USER=$(get_original_user)
 BACKUP_DIR=$(get_setting dir)
 COMPRESSION_LEVEL=$(get_setting compression_level)
