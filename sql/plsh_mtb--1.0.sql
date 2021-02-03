@@ -42,3 +42,5 @@ CREATE TABLE plsh_mtb_backups (
 
 CREATE UNIQUE INDEX ON plsh_mtb_backups (state) WHERE state IN ('running', 'stopped');
 
+REVOKE ALL ON plsh_mtb_backups FROM PUBLIC;
+GRANT SELECT ON plsh_mtb_backups TO PUBLIC;
