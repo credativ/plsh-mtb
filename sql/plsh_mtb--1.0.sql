@@ -18,7 +18,8 @@
 -- ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO OBLIGATIONS TO
 -- PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
-CREATE FUNCTION customer_backup(cmd text) RETURNS text
+CREATE TYPE plsh_mtb_backup_cmd AS ENUM ('start', 'stop', 'abort', 'continue');
+CREATE FUNCTION customer_backup(cmd plsh_mtb_backup_cmd) RETURNS text
 LANGUAGE plsh
 AS $$
 #!/bin/sh
