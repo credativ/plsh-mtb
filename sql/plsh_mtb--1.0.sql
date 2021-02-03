@@ -28,7 +28,6 @@ exec "$PGBINDIR/plsh_mtb" "$cmd"
 $$;
 
 CREATE TYPE plsh_mtb_backup_state AS ENUM ('running', 'done', 'aborted', 'failed', 'stopped');
-
 CREATE TABLE plsh_mtb_backups (
     filename text PRIMARY KEY,
     started timestamp NOT NULL,
@@ -39,8 +38,6 @@ CREATE TABLE plsh_mtb_backups (
     CHECK (state IN ('running', 'stopped') AND pid IS NOT NULL AND ended IS NULL),
     CHECK (state NOT IN ('running', 'stopped') AND pid IS NULL AND ended IS NOT NULL)
 );
-
 CREATE UNIQUE INDEX ON plsh_mtb_backups (state) WHERE state IN ('running', 'stopped');
-
 REVOKE ALL ON plsh_mtb_backups FROM PUBLIC;
 GRANT SELECT ON plsh_mtb_backups TO PUBLIC;
