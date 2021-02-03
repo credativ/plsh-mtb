@@ -144,6 +144,20 @@ backup_start() {
     fi
 }
 
+# Abort Backup
+backup_abort() {
+    PID=run_sql "SELECT pid FROM plsh_mbt_backups WHERE state='running';" || \
+        bailout "Could not mark backup running"
+
+    [ ! is_backup_running $PID] || \
+        bailout "No Backup to abort"
+
+    kill -SIGTERM $PID
+    shift
+
+    mark_backup_aborted
+}
+
 # Stop Backup
 backup_stop() {
     PID=run_sql "SELECT pid FROM plsh_mbt_backups WHERE state='running';" || \
