@@ -34,6 +34,11 @@ CREATE TABLE plsh_mtb_backups (
     started timestamp NOT NULL,
     ended timestamp,
     state plsh_mtb_backup_state NOT NULL,
-    pid integer
+    pid integer CHECK (pid > 0),
+    CHECK (ended >= started),
+    CHECK (state IN ('running', 'stopped') AND pid IS NOT NULL AND ended IS NULL),
+    CHECK (state NOT IN ('running', 'stopped') AND pid IS NULL AND ended IS NOT NULL)
 );
+
+CREATE UNIQUE INDEX ON plsh_mtb_backups (state) WHERE state IN ('running', 'stopped');
 
