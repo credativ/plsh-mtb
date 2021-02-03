@@ -66,7 +66,11 @@ get_running_pid() {
 
 get_backup_file_by_pid() {
     pid=$1
-    # FIXME implement
+
+    output=$(run_sql "SELECT filename FROM ${table_prefix}_backups WHERE pid=$pid")
+
+    [[ -n $output ]] || bailout "Filename for PID $pid not found"
+    print -r -- "$output"
 }
 
 is_pid_backup_process() {
