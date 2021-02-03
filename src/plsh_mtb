@@ -64,11 +64,35 @@ get_original_user() {
     run_sql "SELECT usename FROM pg_stat_activity WHERE pid=$PPID"
 }
 
+get_running_pid() {
+    run_sql "SELECT pid FROM ${table_prefix}_backups WHERE state IN ('running', 'stopped')"
+}
+
+get_backup_file_by_pid() {
+    pid=$1
+    # FIXME implement
+}
+
+is_pid_backup_process() {
+    pid=$1
+
+    if [[ ! -d /proc/$pid ]]; then
+	# Process does not exist at all
+	backup_file=$(get_backup_file_by_pid $pid)
+	mark_backup_ended failed "$backup_file"
+	return 1
+    elif .; then
+	# FIXME check cmdline, whatever
+        return 1
+    fi
+
+    return 0
+}
+
 is_backup_running() {
-    output=$(run_sql "SELECT count(*) FROM ${table_prefix}_backups WHERE state='running'") || \
-        bailout "Could not mark backup running"
+    pid=$(get_running_pid)
     
-    [[ $output -gt 0 ]] && return 0
+    [[ -n $pid ]] && return 0
     return 1
 }
 
@@ -76,42 +100,23 @@ mark_backup_running() {
     started=$1; shift
     filename=$1; shift
 
+    # FIXME turn into UPSERT - only set started on insert
     run_sql "INSERT INTO ${table_prefix}_backups (filename, started, state, pid)\
                VALUES('$filename', TO_TIMESTAMP('$started', 'YYYYMMDDHHMISS'), 'running', $$)" || \
         bailout "Could not mark backup running"
 }
 
-mark_backup_done() {
+mark_backup_ended() {
+    state=$1
+    backup_file=$2
     ended=$(date --date=now +%Y%m%d%H%M%S)
 
     run_sql "UPDATE ${table_prefix}_backups SET \
                ended=TO_TIMESTAMP('$ended', 'YYYYMMDDHHMISS'), \
-               state='done', \
+               state='$state', \
                pid=NULL \
-             WHERE filename = '${BACKUP_FILE}'" || \
-        bailout "Could not mark backup done"
-}
-
-mark_backup_failed() {
-    ended=$(date --date=now +%Y%m%d%H%M%S)
-
-    run_sql "UPDATE ${table_prefix}_backups SET \
-               ended=TO_TIMESTAMP('$ended', 'YYYYMMDDHHMISS'), \
-               state='failed', \
-               pid=NULL \
-             WHERE filename = '${BACKUP_FILE}'" || \
-        bailout "Could not mark backup failed"
-}
-
-mark_backup_aborted() {
-    ended=$(date --date=now +%Y%m%d%H%M%S)
-
-    run_sql "UPDATE ${table_prefix}_backups SET \
-               ended=TO_TIMESTAMP('$ended', 'YYYYMMDDHHMISS'), \
-               state='aborted', \
-               pid=NULL \
-             WHERE filename = '${BACKUP_FILE}'" || \
-        bailout "Could not mark backup aborted"
+             WHERE filename = '${backup_file}'" || \
+        bailout "Could not mark backup $state"
 }
 
 # Start Backup
@@ -137,53 +142,45 @@ backup_start() {
 
     # Check for successful backup
     if [[ $? = 0 ]]; then
-	mark_backup_done "${BACKUP_FILE}"
+	mark_backup_ended done "${BACKUP_FILE}"
     else
-	mark_backup_failed "${BACKUP_FILE}"
+	mark_backup_ended failed "${BACKUP_FILE}"
 	bailout "Backup failed"
+    fi
+}
+
+backup_kill() {
+    signal=$1; shift
+    state=$1; shift
+
+    is_backup_running || bailout "No backup to kill"
+    pid=$(get_running_pid)
+
+    is_pid_backup_process $pid || bailout "$pid is not a backup process"
+
+    kill -$signal $pid
+
+    backup_file=$(get_backup_file_by_pid $pid)
+    if [[ $state = running ]]; then
+	mark_backup_running "" "$backup_file"
+    else
+	mark_backup_ended "$state" "$backup_file"
     fi
 }
 
 # Abort Backup
 backup_abort() {
-    PID=run_sql "SELECT pid FROM plsh_mbt_backups WHERE state='running';" || \
-        bailout "Could not mark backup running"
-
-    [ ! is_backup_running $PID] || \
-        bailout "No Backup to abort"
-
-    kill -SIGTERM $PID
-    shift
-
-    mark_backup_aborted
+    backup_kill TERM aborted
 }
 
 # Stop Backup
 backup_stop() {
-    PID=run_sql "SELECT pid FROM plsh_mbt_backups WHERE state='running';" || \
-        bailout "Could not mark backup running"
-
-    [ ! is_backup_running $PID] || \
-        bailout "No Backup to abort"
-
-    kill -SIGSTOP $PID
-    shift
-
-    mark_backup_stoped
+    backup_kill STOP stopped
 }
 
 # Continue Backup
 backup_continue() {
-    PID=run_sql "SELECT pid FROM plsh_mbt_backups WHERE state='stopped';" || \
-        bailout "Could not mark backup running"
-
-    [ ! is_backup_running $PID] || \
-        bailout "No Backup to continue"
-
-    kill -SIGCONT $PID
-    shift
-
-    mark_backup_running
+    backup_kill CONT running
 }
 
 # Remove Backup
