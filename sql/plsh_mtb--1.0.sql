@@ -36,8 +36,8 @@ CREATE TABLE plsh_mtb_backups (
     state plsh_mtb_backup_state NOT NULL,
     pid integer CHECK (pid > 0),
     CHECK (ended >= started),
-    CHECK (state IN ('running', 'stopped') AND pid IS NOT NULL AND ended IS NULL),
-    CHECK (state NOT IN ('running', 'stopped') AND pid IS NULL AND ended IS NOT NULL)
+    CHECK ((state IN ('running', 'stopped') AND pid IS NOT NULL AND ended IS NULL) OR
+          (state NOT IN ('running', 'stopped') AND pid IS NULL AND ended IS NOT NULL))
 );
 CREATE UNIQUE INDEX ON plsh_mtb_backups (state) WHERE state IN ('running', 'stopped');
 REVOKE ALL ON plsh_mtb_backups FROM PUBLIC;
