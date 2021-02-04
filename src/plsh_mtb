@@ -98,7 +98,7 @@ mark_backup_running() {
 
     # FIXME turn into UPSERT - only set started on insert
     run_sql "INSERT INTO ${table_prefix}_backups (filename, started, state, pid)\
-               VALUES('$filename', TO_TIMESTAMP('$started', 'YYYYMMDDHHMISS'), 'running', $$)" || \
+               VALUES('$filename', TO_TIMESTAMP('$started', 'YYYYMMDDHH24MISS'), 'running', $$)" || \
         bailout "Could not mark backup running"
 }
 
@@ -110,7 +110,7 @@ mark_backup_ended() {
     ended=$(date --date=now +%Y%m%d%H%M%S)
 
     run_sql "UPDATE ${table_prefix}_backups SET \
-               ended=TO_TIMESTAMP('$ended', 'YYYYMMDDHHMISS'), \
+               ended=TO_TIMESTAMP('$ended', 'YYYYMMDDHH24MISS'), \
                state='$state', \
                pid=NULL \
              WHERE filename = '${backup_file}'" || \
