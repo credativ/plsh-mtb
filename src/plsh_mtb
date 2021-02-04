@@ -85,7 +85,7 @@ is_backup_running() {
     # Check whether a backup is running
 
     pid=$(get_running_pid)
-    
+
     [[ -n $pid ]] && return 0
     return 1
 }
@@ -122,29 +122,29 @@ backup_start() {
 
     is_backup_running && bailout "Backup already running"
 
-    BACKUP_DB_DIR=${BACKUP_DIR}/${PGDATABASE}
-    STARTED=$(date --date=now +%Y%m%d%H%M%S)
-    BACKUP_FILE=${STARTED}.sql
+    backup_db_dir=${BACKUP_DIR}/${PGDATABASE}
+    started=$(date --date=now +%Y%m%d%H%M%S)
+    backup_file=${started}.sql
 
     # If compression level is set in the range of 1-9 append gz suffix
     if [[ $COMPRESSION_LEVEL = [1-9] ]]; then
-        BACKUP_FILE=${BACKUP_FILE}.gz
+        backup_file=${backup_file}.gz
     fi
 
-    mkdir -p "${BACKUP_DB_DIR}" || bailout "Could not create backup directory"
+    mkdir -p "${backup_db_dir}" || bailout "Could not create backup directory"
 
     # Insert database entry for running backup
-    mark_backup_running ${STARTED} "${BACKUP_FILE}"
-    
+    mark_backup_running ${started} "${backup_file}"
+
     # Run backup
     # FIXME Detach into background
-    pg_dump -Z ${COMPRESSION_LEVEL} ${PGDATABASE} -f "${BACKUP_DB_DIR}/${BACKUP_FILE}"
+    pg_dump -Z ${COMPRESSION_LEVEL} ${PGDATABASE} -f "${backup_db_dir}/${backup_file}"
 
     # Check for successful backup
     if [[ $? = 0 ]]; then
-	mark_backup_ended done "${BACKUP_FILE}"
+	mark_backup_ended done "${backup_file}"
     else
-	mark_backup_ended failed "${BACKUP_FILE}"
+	mark_backup_ended failed "${backup_file}"
 	bailout "Backup failed"
     fi
 }
