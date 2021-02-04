@@ -192,3 +192,12 @@ BACKUP_DIR=$(get_setting dir)
 COMPRESSION_LEVEL=$(get_setting compression_level)
 DUMP_CMD=$(get_setting dump)
 LOGFILE=$(get_setting log)
+
+action=$1
+
+case "$action" in
+    (start|stop|continue|abort) backup_$action ;;
+    (*) bailout "Uknown action $action" ;;
+esac
+
+exit 0
