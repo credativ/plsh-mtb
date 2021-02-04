@@ -24,6 +24,8 @@ LANGUAGE plsh
 AS $$
 #!/bin/sh
 
+cmd=$1
+
 PGBINDIR=$(pg_config --bindir)
 exec "$PGBINDIR/plsh_mtb" "$cmd"
 $$;
