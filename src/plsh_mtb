@@ -126,19 +126,18 @@ backup_start() {
     started=$(date --date=now +%Y%m%d%H%M%S)
     backup_file=${started}.sql
 
-    # If compression level is set in the range of 1-9 append gz suffix
-    if [[ $COMPRESSION_LEVEL = [1-9] ]]; then
-        backup_file=${backup_file}.gz
-    fi
-
     mkdir -p "${backup_db_dir}" || bailout "Could not create backup directory"
+
+    backup_cmd=$DUMP_CMD
+    backup_cmd=${backup_cmd/%d/${PGDATABASE}}
+    backup_cmd=${backup_cmd/%f/${backup_db_dir}\/${backup_file}}
 
     # Insert database entry for running backup
     mark_backup_running ${started} "${backup_file}"
 
     # Run backup
     # FIXME Detach into background
-    pg_dump -Z ${COMPRESSION_LEVEL} ${PGDATABASE} -f "${backup_db_dir}/${backup_file}"
+    $backup_cmd
 
     # Check for successful backup
     if [[ $? = 0 ]]; then
@@ -189,7 +188,6 @@ backup_continue() {
 }
 
 BACKUP_DIR=$(get_setting dir)
-COMPRESSION_LEVEL=$(get_setting compression_level)
 DUMP_CMD=$(get_setting dump)
 LOGFILE=$(get_setting log)
 
