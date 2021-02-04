@@ -6,7 +6,7 @@ Mandantenfähige Backuplösung für PostgreSQL basierend auf PL/SH und Korn Shel
 Diese Lösung zielt darauf ab,
 dass unprivilegierte Benutzer einer PostgreSQL-Datenbank Backups erstellen, stoppen und abbrechen können,
 aber nicht selber wiederherstellen können. Dabei sollen die Backups unter der Kontrolle des
-System-Users des PostgreSQL-Dienstes im Dateisystem auf dem Server selbe rabgelegt werden.
+System-Users des PostgreSQL-Dienstes im Dateisystem auf dem Server selber abgelegt werden.
 
 ## Installation
 
@@ -79,20 +79,43 @@ Darüberhinaus wird der Status aller Backups in der Tabelle `plsh_mtb_backups` g
 ### Backup-Statūs
 
 ```
-SELECT * FROM plsh_mtb_backups
-```
+test=# SELECT * FROM plsh_mtb_backups;
+      filename      |       started       |        ended        |  state  | pid
+--------------------+---------------------+---------------------+---------+------
+ 20210204120523.sql | 2021-02-04 00:05:23 | 2021-02-04 00:05:23 | done    |
+ 20210204120622.sql | 2021-02-04 00:06:22 | 2021-02-04 00:06:41 | aborted |
+ 20210204133214.sql | 2021-02-04 13:32:14 | 2021-02-04 13:33:14 | done    |
+ 20210204133608.sql | 2021-02-04 13:36:08 |                     | running | 6705
+(4 Zeilen)
 
-Mögliche Statūs sind:
-+ **running**
-Markiert aktives Backup.
-+ **stopped**
-Markiert angehaltenes Backup.
-+ **aborted**
-Markiert abgebrochenes Backup.
-+ **failed**
-Markiert gescheitertes Backup
-+ **done**
-Markiert erfolgreiches Backup.
+```
+#### Spalten:
++ **filename**
+
+    Diese Spalte ist der Name des Backups und wird gleichzeitig als Primärschlüssel verwendet.
+
++ **started**
+
+    Zeitstempel für den Start des Backups.
+
++ **ended**
+
+    Zeitstempel für das Ende des Backups.
+
++ **state**
+    
+    Diese Spalte zeigt den aktuellen Status eines Backups.
+    Mögliche Statūs sind:
+    + **running**
+    Markiert aktives Backup.
+    + **stopped**
+    Markiert angehaltenes Backup.
+    + **aborted**
+    Markiert abgebrochenes Backup.
+    + **failed**
+    Markiert gescheitertes Backup
+    + **done**
+    Markiert erfolgreiches Backup.
 
 ### Rechte-Management
 
