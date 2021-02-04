@@ -78,7 +78,7 @@ Darüberhinaus wird der Status aller Backups in der Tabelle `plsh_mtb_backups` g
 
 ### Backup-Statūs
 
-```
+```sql
 test=# SELECT * FROM plsh_mtb_backups;
       filename      |       started       |        ended        |  state  | pid
 --------------------+---------------------+---------------------+---------+------
