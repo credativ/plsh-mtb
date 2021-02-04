@@ -106,15 +106,15 @@ test=# SELECT * FROM plsh_mtb_backups;
     
     Diese Spalte zeigt den aktuellen Status eines Backups.
     Mögliche Statūs sind:
-    + **running**
+    + `running`
     Markiert aktives Backup.
-    + **stopped**
+    + `stopped`
     Markiert angehaltenes Backup.
-    + **aborted**
+    + `aborted`
     Markiert abgebrochenes Backup.
-    + **failed**
+    + `failed`
     Markiert gescheitertes Backup
-    + **done**
+    + `done`
     Markiert erfolgreiches Backup.
 
 + **pid**
