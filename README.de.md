@@ -40,10 +40,14 @@ um die Backups zu steuern.
 SELECT customer_backup(<cmd>);
 ```
 Die möglichen Kommandos für customer\_backup sind:
-+ start     Beginnt ein Backup
-+ abort     Bricht das Backup mit dem Status 'running' ab.
-+ stop      Unterbricht das Backup mit dem Status 'running'.
-+ continue  Setzt das Backup mit dem Status 'stopped' fort.
++ **start**
+Beginnt ein Backup
++ **abort**
+Bricht das Backup mit dem Status 'running' ab.
++ **stop**
+Unterbricht das Backup mit dem Status 'running'.
++ **continue**
+Setzt das Backup mit dem Status 'stopped' fort.
 
 Darüberhinaus wird der Status eines Backups in der Tabelle plsh\_mtb\_backups gepflegt
 ```
@@ -51,11 +55,16 @@ SELECT * FROM plsh_mbt_backups
 ```
 
 Mögliche Status sind:
-+ running   Markiert aktives Backup.
-+ stopped   Markiert angehaltenes Backup.
-+ aborted   Markiert abgebrochenes Backup.
-+ failed    Markiert gescheitertes Backup
-+ done      Markiert erfolgreiches Backup.
++ **running**
+Markiert aktives Backup.
++ **stopped**
+Markiert angehaltenes Backup.
++ **aborted**
+Markiert abgebrochenes Backup.
++ **failed**
+Markiert gescheitertes Backup
++ **done**
+Markiert erfolgreiches Backup.
 
 
 
