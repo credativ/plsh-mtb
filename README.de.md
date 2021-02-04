@@ -44,6 +44,15 @@ plsh_mtb.dir = '/tmp/backups'
 plsh_mtb.log = 'syslog'
 ```
 
++ plsh\_mtb.dump
+
+    Frei konfigurierbares Dump-Kommando.
+    + **%d** Platzhalter für den Datenbanknamen.
+    + **%f** Platzhalter für den Dateinamen des Backups.
++ plsh\_mtb.dir
+
+    Gibt das Verzeichnis an in dem die Backup-Ordner für die Datenbanken angelegt werden.
+
 ## Verwendung
 
 ### Steuern von Backups
