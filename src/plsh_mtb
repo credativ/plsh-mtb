@@ -197,7 +197,7 @@ action=$1
 
 case "$action" in
     (start|stop|continue|abort) backup_$action ;;
-    (*) bailout "Uknown action $action" ;;
+    (*) bailout "Unknown action $action" ;;
 esac
 
 exit 0
