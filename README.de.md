@@ -117,6 +117,10 @@ test=# SELECT * FROM plsh_mtb_backups;
     + **done**
     Markiert erfolgreiches Backup.
 
++ **pid**
+    
+    Diese spalte zeigt die ID des aktuellen Backup-Prozess
+    und wird nur gesetzt für den Status `running` oder `stopped`.
 ### Rechte-Management
 
 Es können separat Rechte für das Steuern ovn Backups und für das Auslesen von Status
