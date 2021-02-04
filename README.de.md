@@ -25,13 +25,21 @@ CREATE EXTENSION plsh_mtb;
 
 ## Konfiguration
 Die Konfiguration der Extension geschieht über die postgresql.conf.
-
-
 ```
 plsh_mtb.dump = 'pg_dump -Z 5 %d -f %f.gz'
 plsh_mtb.dir = '/tmp/backups'
 plsh_mtb.log = 'syslog'
 ```
++ plsh\_mtb.dump
+
+    Frei konfigurierbares Dump-Kommando.
+    + **%d** Platzhalter für den Datenbanknamen.
+    + **%f** Platzhalter für den Dateinamen des Backups.
+
++ plsh\_mbt.dir
+
+    Gibt das Verzeichnis an in dem die Backup-Ordner für die Datenbanken angelegt werden.
+
 ## Verwendung
 Benutzern biete diese Extension die Funktion customer\_backup,
 welche verwendet wird,
