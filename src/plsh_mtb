@@ -1,4 +1,5 @@
 #!/bin/mksh
+# -*- mode: sh -*-
 #-
 # Copyright (c) 2021 Dominik George, credativ GmbH <dominik.george@credativ.de>
 # Copyright (c) 2021 Mathis Rudolf, credativ GmbH <mathis.rudolf@credativ.de>
