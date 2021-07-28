@@ -182,15 +182,16 @@ backup_kill() {
     pid=$(get_running_pid)
 
     is_pid_backup_process $pid || bailout "$pid is not a backup process"
-
+    
+    kill -CONT $pid
     kill -$signal $pid
 
     backup_file=$(get_backup_file_by_pid $pid)
-    if [[ $state = running ]]; then
-	mark_backup_running "" "$backup_file"
-    else
-	mark_backup_ended "$state" "$backup_file"
-    fi
+
+    case "$state" in
+        (running|stopped|done|aborted) mark_backup_$state "$backup_file";;
+        (*) bailout "Unknown state $state" ;;
+    esac
 }
 
 backup_abort() {
