@@ -25,6 +25,9 @@ config_prefix=plsh_mtb
 table_prefix=plsh_mtb
 backup_cmd_pid=NULL
 
+trap 'kill -STOP $backup_cmd_pid' STOP
+trap 'kill -CONT $backup_cmd_pid' CONT
+
 bailout() {
     print -ru2 "$*"
     exit 1
