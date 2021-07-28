@@ -23,6 +23,7 @@
 
 config_prefix=plsh_mtb
 table_prefix=plsh_mtb
+backup_cmd_pid=NULL
 
 bailout() {
     print -ru2 "$*"
