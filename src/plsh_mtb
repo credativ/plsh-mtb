@@ -116,16 +116,15 @@ mark_backup_done() {
         bailout "Could not mark backup $state"
 }
 
-mark_backup_ended() {
+mark_backup_aborted() {
     # Mark a backup with a state other than running
 
-    state=$1
-    backup_file=$2
+    backup_file=$1
     ended=$(date --date=now +%Y%m%d%H%M%S)
 
     run_sql "UPDATE ${table_prefix}_backups SET \
                ended=TO_TIMESTAMP('$ended', 'YYYYMMDDHH24MISS'), \
-               state='$state', \
+               state='aborted', \
                pid=NULL \
              WHERE filename = '${backup_file}'" || \
         bailout "Could not mark backup $state"
