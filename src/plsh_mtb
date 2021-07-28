@@ -130,6 +130,17 @@ mark_backup_aborted() {
         bailout "Could not mark backup $state"
 }
 
+mark_backup_stopped() {
+    # Mark a backup with a state other than running
+
+    backup_file=$1
+
+    run_sql "UPDATE ${table_prefix}_backups SET \
+               state='stopped' \
+             WHERE filename = '${backup_file}'" || \
+        bailout "Could not mark backup stopped"
+}
+
 backup_start() {
     # Start a new backup
 
