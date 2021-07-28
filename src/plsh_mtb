@@ -148,7 +148,7 @@ backup_start() {
 
     backup_db_dir=${BACKUP_DIR}/${PGDATABASE}
     started=$(date --date=now +%Y%m%d%H%M%S)
-    backup_file=${started}.sql
+    backup_file=${started}
 
     mkdir -p "${backup_db_dir}" || bailout "Could not create backup directory"
 
@@ -157,17 +157,24 @@ backup_start() {
     backup_cmd=${backup_cmd/\%f/${backup_db_dir}\/${backup_file}}
 
     # Insert database entry for running backup
-    mark_backup_running ${started} "${backup_file}"
+    run_sql "INSERT INTO ${table_prefix}_backups (filename, started, state, pid)\
+               VALUES('$backup_file', TO_TIMESTAMP('$started', 'YYYYMMDDHH24MISS'), 'running', $$)" || \
+        bailout "Could not mark backup running"
 
     # Run backup
-    # FIXME Detach into background
-    $backup_cmd
+    $backup_cmd &
+
+    # Save pid of backup-command
+    backup_cmd_pid=$!
+
+    # Wait for backup-command to finish
+    wait $backup_cmd_pid
 
     # Check for successful backup
     if [[ $? = 0 ]]; then
-	mark_backup_ended done "${backup_file}"
+	mark_backup_done "${backup_file}"
     else
-	mark_backup_ended failed "${backup_file}"
+	mark_backup_failed "${backup_file}"
 	bailout "Backup failed"
     fi
 }
