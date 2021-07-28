@@ -94,8 +94,14 @@ is_backup_running() {
 mark_backup_running() {
     # Register a new running backup
 
-    started=$1; shift
-    filename=$1; shift
+    backup_file=$1;
+
+    run_sql "UPDATE ${table_prefix}_backups SET \
+               state='running'
+             WHERE filename = '${backup_file}'" || \
+        bailout "Could not mark backup stopped"
+}
+
 
     # FIXME turn into UPSERT - only set started on insert
     run_sql "INSERT INTO ${table_prefix}_backups (filename, started, state, pid)\
