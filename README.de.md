@@ -39,7 +39,7 @@ Die Konfiguration der Extension geschieht über die `postgresql.conf` (oder übe
 entsprechende Mechanismen, wie z.B. `ALTER SYSTEM`.
 
 ```plain
-plsh_mtb.dump = 'pg_dump -Z 5 %d -f %f.gz'
+plsh_mtb.dump = 'pg_dump -Z 5 PGDATABASE -f BACKUPFILE.gz'
 plsh_mtb.dir = '/tmp/backups'
 plsh_mtb.log = 'syslog'
 ```
@@ -47,8 +47,8 @@ plsh_mtb.log = 'syslog'
 + plsh\_mtb.dump
 
     Frei konfigurierbares Dump-Kommando.
-    + **%d** Platzhalter für den Datenbanknamen.
-    + **%f** Platzhalter für den Dateinamen des Backups.
+    + **PGDATABASE** Platzhalter für den Datenbanknamen.
+    + **BACKUPFILE** Platzhalter für den Pfad und Dateinamen des Backups.
 + plsh\_mtb.dir
 
     Gibt das Verzeichnis an in dem die Backup-Ordner für die Datenbanken angelegt werden.
