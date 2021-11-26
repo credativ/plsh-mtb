@@ -23,6 +23,10 @@
 
 config_prefix=plsh_mtb
 table_prefix=plsh_mtb
+backup_cmd_pid=NULL
+
+trap 'kill -STOP $backup_cmd_pid' STOP
+trap 'kill -CONT $backup_cmd_pid' CONT
 
 bailout() {
     print -ru2 "$*"
@@ -34,7 +38,7 @@ run_sql() {
 
     sql="$*"
 
-    output=$(psql -AtX -c "$sql" 2>&1) || bailout "$output"
+    output=$(psql -AtX -c "${sql}" 2>&1) || bailout "${output}"
     print -r -- "${output}"
 }
 
@@ -43,7 +47,7 @@ get_setting() {
 
     param=$1
 
-    run_sql "SHOW $config_prefix.$param"
+    run_sql "SHOW ${config_prefix}.${param}"
 }
 
 get_running_pid() {
@@ -56,12 +60,12 @@ get_backup_file_by_pid() {
     # Get the filename of a running/stopped backup by its PID
     # FIXME Probably unnecessary as we can only have one running backup…
 
-    pid=$1
+    pid=${1}
 
-    output=$(run_sql "SELECT filename FROM ${table_prefix}_backups WHERE pid=$pid")
+    output=$(run_sql "SELECT filename FROM ${table_prefix}_backups WHERE pid=${pid}")
 
-    [[ -n $output ]] || bailout "Filename for PID $pid not found"
-    print -r -- "$output"
+    [[ -n ${output} ]] || bailout "Filename for PID ${pid} not found"
+    print -r -- "${output}"
 }
 
 is_pid_backup_process() {
@@ -69,10 +73,10 @@ is_pid_backup_process() {
 
     pid=$1
 
-    if [[ ! -d /proc/$pid ]]; then
+    if [[ ! -d /proc/${pid} ]]; then
 	# Process does not exist at all
-	backup_file=$(get_backup_file_by_pid $pid)
-	mark_backup_ended failed "$backup_file"
+	backup_file=$(get_backup_file_by_pid ${pid})
+	mark_backup_ended failed "${backup_file}"
 	return 1
 #    elif .; then
 #        # FIXME check cmdline, whatever
@@ -87,35 +91,58 @@ is_backup_running() {
 
     pid=$(get_running_pid)
 
-    [[ -n $pid ]] && return 0
+    [[ -n ${pid} ]] && return 0
     return 1
 }
 
 mark_backup_running() {
     # Register a new running backup
 
-    started=$1; shift
-    filename=$1; shift
+    backup_file=${1};
 
-    # FIXME turn into UPSERT - only set started on insert
-    run_sql "INSERT INTO ${table_prefix}_backups (filename, started, state, pid)\
-               VALUES('$filename', TO_TIMESTAMP('$started', 'YYYYMMDDHH24MISS'), 'running', $$)" || \
-        bailout "Could not mark backup running"
+    run_sql "UPDATE ${table_prefix}_backups SET \
+               state='running'
+             WHERE filename = '${backup_file}'" || \
+        bailout "Could not mark backup stopped"
 }
 
-mark_backup_ended() {
+mark_backup_done() {
     # Mark a backup with a state other than running
 
-    state=$1
-    backup_file=$2
+    backup_file=${1}
     ended=$(date --date=now +%Y%m%d%H%M%S)
 
     run_sql "UPDATE ${table_prefix}_backups SET \
-               ended=TO_TIMESTAMP('$ended', 'YYYYMMDDHH24MISS'), \
-               state='$state', \
+               ended=TO_TIMESTAMP('${ended}', 'YYYYMMDDHH24MISS'), \
+               state='done', \
                pid=NULL \
              WHERE filename = '${backup_file}'" || \
-        bailout "Could not mark backup $state"
+        bailout "Could not mark backup ${state}"
+}
+
+mark_backup_aborted() {
+    # Mark a backup with a state other than running
+
+    backup_file=${1}
+    ended=$(date --date=now +%Y%m%d%H%M%S)
+
+    run_sql "UPDATE ${table_prefix}_backups SET \
+               ended=TO_TIMESTAMP('${ended}', 'YYYYMMDDHH24MISS'), \
+               state='aborted', \
+               pid=NULL \
+             WHERE filename = '${backup_file}'" || \
+        bailout "Could not mark backup ${state}"
+}
+
+mark_backup_stopped() {
+    # Mark a backup with a state other than running
+
+    backup_file=$1
+
+    run_sql "UPDATE ${table_prefix}_backups SET \
+               state='stopped' \
+             WHERE filename = '${backup_file}'" || \
+        bailout "Could not mark backup stopped"
 }
 
 backup_start() {
@@ -125,26 +152,33 @@ backup_start() {
 
     backup_db_dir=${BACKUP_DIR}/${PGDATABASE}
     started=$(date --date=now +%Y%m%d%H%M%S)
-    backup_file=${started}.sql
+    backup_file=${started}
 
     mkdir -p "${backup_db_dir}" || bailout "Could not create backup directory"
 
-    backup_cmd=$DUMP_CMD
-    backup_cmd=${backup_cmd/\%d/${PGDATABASE}}
-    backup_cmd=${backup_cmd/\%f/${backup_db_dir}\/${backup_file}}
+    backup_cmd=${DUMP_CMD}
+    backup_cmd=${backup_cmd/PGDATABASE/${PGDATABASE}}
+    backup_cmd=${backup_cmd/BACKUPFILE/${backup_db_dir}\/${backup_file}}
 
     # Insert database entry for running backup
-    mark_backup_running ${started} "${backup_file}"
+    run_sql "INSERT INTO ${table_prefix}_backups (filename, started, state, pid)\
+               VALUES('${backup_file}', TO_TIMESTAMP('${started}', 'YYYYMMDDHH24MISS'), 'running', $$)" || \
+        bailout "Could not mark backup running"
 
     # Run backup
-    # FIXME Detach into background
-    $backup_cmd
+    ${backup_cmd} &
+
+    # Save pid of backup-command
+    backup_cmd_pid=$!
+
+    # Wait for backup-command to finish
+    wait ${backup_cmd_pid}
 
     # Check for successful backup
     if [[ $? = 0 ]]; then
-	mark_backup_ended done "${backup_file}"
+	mark_backup_done "${backup_file}"
     else
-	mark_backup_ended failed "${backup_file}"
+	mark_backup_failed "${backup_file}"
 	bailout "Backup failed"
     fi
 }
@@ -158,16 +192,17 @@ backup_kill() {
     is_backup_running || bailout "No backup to kill"
     pid=$(get_running_pid)
 
-    is_pid_backup_process $pid || bailout "$pid is not a backup process"
+    is_pid_backup_process ${pid} || bailout "${pid} is not a backup process"
+    
+    kill -CONT ${pid}
+    kill -${signal} ${pid}
 
-    kill -$signal $pid
+    backup_file=$(get_backup_file_by_pid ${pid})
 
-    backup_file=$(get_backup_file_by_pid $pid)
-    if [[ $state = running ]]; then
-	mark_backup_running "" "$backup_file"
-    else
-	mark_backup_ended "$state" "$backup_file"
-    fi
+    case "${state}" in
+        (running|stopped|done|aborted) mark_backup_${state} "${backup_file}";;
+        (*) bailout "Unknown state ${state}" ;;
+    esac
 }
 
 backup_abort() {
@@ -195,8 +230,8 @@ LOGFILE=$(get_setting log)
 action=$1
 
 case "$action" in
-    (start|stop|continue|abort) backup_$action ;;
-    (*) bailout "Unknown action $action" ;;
+    (start|stop|continue|abort) backup_${action} ;;
+    (*) bailout "Unknown action ${action}" ;;
 esac
 
 exit 0
