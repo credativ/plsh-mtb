@@ -39,7 +39,7 @@ Die Konfiguration der Extension geschieht über die `postgresql.conf` (oder übe
 entsprechende Mechanismen, wie z.B. `ALTER SYSTEM`.
 
 ```plain
-plsh_mtb.dump = 'pg_dump -Z 5 %d -f %f.gz'
+plsh_mtb.dump = 'pg_dump -Z 5 PGDATABASE -f BACKUPFILE.gz'
 plsh_mtb.dir = '/tmp/backups'
 plsh_mtb.log = 'syslog'
 ```

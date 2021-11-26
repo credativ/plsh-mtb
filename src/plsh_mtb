@@ -157,8 +157,8 @@ backup_start() {
     mkdir -p "${backup_db_dir}" || bailout "Could not create backup directory"
 
     backup_cmd=$DUMP_CMD
-    backup_cmd=${backup_cmd/\%d/${PGDATABASE}}
-    backup_cmd=${backup_cmd/\%f/${backup_db_dir}\/${backup_file}}
+    backup_cmd=${backup_cmd/\PGDATABASE/${PGDATABASE}}
+    backup_cmd=${backup_cmd/\BACKUPFILE/${backup_db_dir}\/${backup_file}}
 
     # Insert database entry for running backup
     run_sql "INSERT INTO ${table_prefix}_backups (filename, started, state, pid)\
